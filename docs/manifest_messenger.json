@@ -1,0 +1,8 @@
+{
+  "name": "CA53Y Comms Messenger (ESP32)",
+  "version": "1.0.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    { "chipFamily": "ESP32", "parts": [ { "path": "firmware/CA53Y_Comms_Messenger.bin", "offset": 0 } ] }
+  ]
+}

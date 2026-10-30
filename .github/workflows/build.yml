@@ -1,0 +1,50 @@
+name: Build firmware
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: CA53Y_Comms_Messenger
+            sketch: CA53Y_Comms
+            fqbn: esp32:esp32:esp32
+            flags: -DRELAY_ONLY=0
+          - name: CA53Y_Comms_Relay
+            sketch: CA53Y_Comms
+            fqbn: esp32:esp32:esp32
+            flags: -DRELAY_ONLY=1
+          - name: CA53Y_Relay_S3
+            sketch: CA53Y_Relay_S3
+            fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=4M
+            flags: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install ESP32 core
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@3.3.12
+      - name: Compile
+        run: |
+          arduino-cli compile -b "${{ matrix.fqbn }}" ${{ matrix.sketch }} --build-path build \
+            --build-property "compiler.cpp.extra_flags=${{ matrix.flags }}"
+          # drop the blank padding at the end so browser flashing is quick
+          python3 -c "import sys;d=open(sys.argv[1],'rb').read();n=(len(d.rstrip(b'\xff'))+4095)//4096*4096;open(sys.argv[2],'wb').write(d[:n])" \
+            build/${{ matrix.sketch }}.ino.merged.bin ${{ matrix.name }}.bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}.bin
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.name }}.bin

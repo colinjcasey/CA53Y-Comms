@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flash CA53Y Comms</title>
+<meta name="theme-color" content="#0F2A30">
+<script type="module" src="https://unpkg.com/esp-web-tools@10.4.0/dist/web/install-button.js?module"></script>
+<style>
+:root{--lac:#0F2A30;--lac2:#17393F;--line:#2D545A;--gold:#CFA84E;--champ:#EAD9A8;--ivory:#F2EBD9;--mist:#A3B8B2;--rose:#E39098;
+--disp:Didot,"Bodoni 72","Bodoni MT","Playfair Display",Georgia,serif;--body:"Avenir Next",Avenir,"Segoe UI",Roboto,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--lac);color:var(--ivory);font:17px/1.55 var(--body)}
+a{color:var(--gold)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.plate{position:relative;overflow:hidden;text-align:center;padding:64px 20px 40px;border-bottom:1px solid var(--line)}
+.plate::before{content:"";position:absolute;left:50%;top:100%;width:1100px;height:1100px;transform:translate(-50%,-50%);
+background:repeating-conic-gradient(from 0deg,rgba(207,168,78,.22) 0 3deg,transparent 3deg 10deg);
+-webkit-mask:radial-gradient(closest-side,transparent 14%,#000 16%,#000 52%,transparent 100%);
+mask:radial-gradient(closest-side,transparent 14%,#000 16%,#000 52%,transparent 100%);pointer-events:none}
+.plate>*{position:relative}
+h1{margin:0;font:400 clamp(44px,11vw,84px)/1 var(--disp);color:var(--champ);letter-spacing:.01em}
+.badge{display:inline-block;margin-top:14px;padding:3px 18px;border:1px solid var(--gold);border-left-width:5px;border-right-width:5px;color:var(--gold);font:400 20px/1.3 var(--disp);letter-spacing:.18em;background:var(--lac)}
+.lede{max-width:42ch;margin:18px auto 0;color:var(--mist)}
+.hop{display:block;width:min(560px,100%);height:auto;margin:30px auto 0}
+.hop text{font:400 14px var(--body);fill:var(--mist)}
+.hop .gold{fill:var(--gold)}
+main{max-width:860px;margin:0 auto;padding:8px 20px 64px}
+h2{font:400 30px/1.2 var(--disp);color:var(--champ);margin:48px 0 10px}
+h3.group{font:400 21px/1.2 var(--disp);color:var(--mist);margin:30px 0 0}
+p{max-width:64ch}
+.boards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:14px}
+.board{border:1px solid var(--line);border-top:3px double var(--gold);padding:20px;background:var(--lac2)}
+.board h4{margin:0;font:400 24px/1.2 var(--disp);color:var(--champ)}
+.board p{color:var(--mist);font-size:15px;margin:8px 0 18px}
+esp-web-install-button button[slot=activate]{font:600 16px/1 var(--body);background:var(--gold);color:#1A2A2C;border:0;padding:13px 20px;border-radius:2px;cursor:pointer}
+.note{color:var(--mist);font-size:15px}
+.warn{border-left:4px solid var(--rose);padding:6px 14px;color:var(--ivory);background:rgba(227,144,152,.08);font-size:15px}
+.warn strong{color:var(--rose);font-weight:600}
+ol{padding-left:22px;max-width:64ch}
+li{margin:6px 0}
+footer{text-align:center;color:var(--mist);font-size:14px;padding:30px 20px;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){
+.plate::before{animation:turn 240s linear infinite}@keyframes turn{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.hop .pulse{animation:hop 3.2s ease-in-out infinite}.hop .pulse.b{animation-delay:1.6s}
+@keyframes hop{0%,100%{opacity:.25}40%{opacity:1}}}
+</style>
+</head>
+<body>
+<header class="plate">
+  <h1>CA53Y Comms</h1>
+  <div class="badge">MESSENGER &amp; RELAY</div>
+  <p class="lede">Off-grid text messaging from your phone through an ESP32. No internet, no cell service, no Bluetooth. Every board repeats what it hears, so messages hop to reach people out of range.</p>
+  <svg class="hop" viewBox="0 0 560 120" role="img" aria-label="A message travels from your board, through a relay, to a board out of direct range">
+    <g fill="none" stroke="#CFA84E" stroke-width="1.5">
+      <path class="pulse" d="M70 60 Q175 10 280 60"/>
+      <path class="pulse b" d="M280 60 Q385 10 490 60"/>
+    </g>
+    <rect x="48" y="48" width="44" height="26" fill="#17393F" stroke="#2D545A"/>
+    <rect x="468" y="48" width="44" height="26" fill="#17393F" stroke="#2D545A"/>
+    <line x1="280" y1="22" x2="280" y2="52" stroke="#CFA84E" stroke-width="2"/>
+    <circle cx="280" cy="20" r="3" fill="#CFA84E"/>
+    <rect x="266" y="52" width="28" height="20" fill="#17393F" stroke="#CFA84E"/>
+    <text x="70" y="98" text-anchor="middle">You</text>
+    <text x="280" y="98" text-anchor="middle" class="gold">Relay</text>
+    <text x="490" y="98" text-anchor="middle">Out of range</text>
+  </svg>
+</header>
+<main>
+  <h2>Flash your board</h2>
+  <p>Plug the board into this computer with a USB data cable, then pick what it should be. Use Chrome or Edge on a desktop or laptop; Safari and Firefox can't talk to USB serial devices.</p>
+
+  <h3 class="group">ESP32 dev board</h3>
+  <div class="boards">
+    <div class="board">
+      <h4>Messenger</h4>
+      <p>Makes its own Wi-Fi network. Join it from your phone to send and receive messages. Also repeats messages for everyone else.</p>
+      <esp-web-install-button manifest="manifest_messenger.json"><button slot="activate">Install Messenger</button>
+        <span slot="unsupported">This browser can't flash boards. Open this page in Chrome or Edge on a computer.</span>
+        <span slot="not-allowed">Flashing needs a secure page (https).</span></esp-web-install-button>
+    </div>
+    <div class="board">
+      <h4>Relay</h4>
+      <p>No Wi-Fi network and no phone needed. Plug it into a USB charger between two people and it passes messages along. The LED flashes each time.</p>
+      <esp-web-install-button manifest="manifest_relay.json"><button slot="activate">Install Relay</button>
+        <span slot="unsupported">This browser can't flash boards. Open this page in Chrome or Edge on a computer.</span>
+        <span slot="not-allowed">Flashing needs a secure page (https).</span></esp-web-install-button>
+    </div>
+  </div>
+
+  <h3 class="group">ESP32-S3 antenna board</h3>
+  <div class="boards">
+    <div class="board">
+      <h4>Long-range relay</h4>
+      <p>For ESP32-S3-MINI-1U boards with an external antenna. Repeats at full power for the longest reach.</p>
+      <esp-web-install-button manifest="manifest_relay_s3.json"><button slot="activate">Install S3 Relay</button>
+        <span slot="unsupported">This browser can't flash boards. Open this page in Chrome or Edge on a computer.</span>
+        <span slot="not-allowed">Flashing needs a secure page (https).</span></esp-web-install-button>
+    </div>
+  </div>
+  <p class="warn"><strong>S3 board: attach the antenna before you plug it in.</strong> Transmitting into an open connector can damage the radio.</p>
+  <p class="note">No port shows up? Try another cable (many are charge-only), or install the CP210x or CH340 USB driver your board needs. If it still won't connect, hold BOOT while you click Install.</p>
+
+  <h2>Setting up the messenger</h2>
+  <ol>
+    <li>On your phone, join the Wi-Fi network named after the board, like CA53Ycomms-1234abC.</li>
+    <li>The sign-in page should open by itself. If it doesn't, go to 192.168.4.1.</li>
+    <li>Choose your name and a Wi-Fi password. From then on the network needs that password.</li>
+    <li>Open Nearby to add someone, or add a contact by the 7 characters after CA53Ycomms-.</li>
+    <li>Set the same Shared PIN on both sides to encrypt a conversation.</li>
+  </ol>
+  <p class="warn">Choosing "Erase device" during install wipes your name, password and contacts. Leave it unchecked when you're only updating.</p>
+
+  <h2>Range</h2>
+  <p>Messengers and relays both repeat messages, up to eight hops. Relays can't read encrypted messages. Height matters more than anything: a relay on a windowsill or a hilltop does far more than one on a desk.</p>
+  <p>Have a 2.8 inch ESP32 touch display? Flash it with <a href="https://github.com/colinjcasey/CA53Y-Comms-Display">CA53Y Comms Display</a>. It talks to these boards.</p>
+</main>
+<footer>CA53Y IND. Source, protocol and build notes <a href="https://github.com/colinjcasey/CA53Y-Comms">on GitHub</a>.</footer>
+</body>
+</html>
