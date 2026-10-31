@@ -6,7 +6,8 @@
   network, no portal, nothing to set up. Encrypted messages are passed on untouched; the
   relay can't read them.
 
-  Must match the messenger firmware: same ESPNOW_CHANNEL, protocol version 2.
+  Must match the messenger firmware: same ESPNOW_CHANNEL, protocol version 2, and the same
+  LONG_RANGE setting (Long Range and Standard boards can't hear each other).
 
   Arduino IDE settings:
     Board:            ESP32S3 Dev Module
@@ -28,6 +29,9 @@
 #endif
 
 // ---------- settings ----------
+#ifndef LONG_RANGE
+#define LONG_RANGE     0     // 0 = Standard network, 1 = Long Range network (every device must match)
+#endif
 #define ESPNOW_CHANNEL 1     // must match every CA53Y board
 #define TX_POWER_QDBM  80    // transmit power in 0.25 dBm steps (80 = 20 dBm, the S3's maximum)
 #define LED_PIN        -1    // plain LED GPIO to flash on each relay, or -1 for none
@@ -121,6 +125,9 @@ void setup() {
   WiFi.disconnect();
   esp_wifi_set_ps(WIFI_PS_NONE);                                  // radio always listening
   esp_wifi_set_channel(ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE);
+#if LONG_RANGE
+  if (esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR) != ESP_OK) Serial.println("LR protocol setup failed");
+#endif
   esp_wifi_set_max_tx_power(TX_POWER_QDBM);
 
   if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init failed, restarting"); delay(2000); ESP.restart(); }
@@ -131,11 +138,18 @@ void setup() {
   peer.ifidx = WIFI_IF_STA;
   peer.encrypt = false;
   esp_now_add_peer(&peer);
+#if LONG_RANGE
+  esp_now_rate_config_t rc = {};
+  rc.phymode = WIFI_PHY_MODE_LR;
+  rc.rate    = WIFI_PHY_RATE_LORA_250K;
+  if (esp_now_set_peer_rate_config(BCAST, &rc) != ESP_OK) Serial.println("LR rate setup failed");
+#endif
 
   int8_t pwr = 0;
   esp_wifi_get_max_tx_power(&pwr);
   delay(1500);   // give the USB serial port a moment to connect
-  Serial.printf("\nCA53Y Comms relay (S3)  channel %d  tx power %.1f dBm\n", ESPNOW_CHANNEL, pwr / 4.0);
+  Serial.printf("\nCA53Y Comms relay (S3)  channel %d  tx power %.1f dBm  %s\n", ESPNOW_CHANNEL, pwr / 4.0,
+                LONG_RANGE ? "LONG RANGE" : "standard");
   Serial.println("Listening. Each relayed message prints a line here.");
 
   for (int i = 0; i < 3; i++) { setLed(true); delay(120); setLed(false); delay(120); }   // "I'm alive"

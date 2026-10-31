@@ -35,6 +35,16 @@ p{max-width:64ch}
 .board p{color:var(--mist);font-size:15px;margin:8px 0 18px}
 esp-web-install-button button[slot=activate]{font:600 16px/1 var(--body);background:var(--gold);color:#1A2A2C;border:0;padding:13px 20px;border-radius:2px;cursor:pointer}
 .note{color:var(--mist);font-size:15px}
+.net{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:560px;margin:18px 0 6px;border:1px solid var(--gold)}
+.net input{position:absolute;opacity:0;pointer-events:none}
+.net label{display:block;padding:14px 16px;cursor:pointer;background:var(--lac2);border-right:1px solid var(--gold)}
+.net label:last-of-type{border-right:0}
+.net label b{display:block;font:400 21px/1.2 var(--disp);color:var(--champ)}
+.net label span{display:block;color:var(--mist);font-size:14px;margin-top:3px}
+.net input:checked+label{background:var(--gold)}
+.net input:checked+label b,.net input:checked+label span{color:#1A2A2C}
+.net input:focus-visible+label{outline:2px solid var(--champ);outline-offset:-4px}
+.tag{display:inline-block;margin-left:8px;padding:1px 8px;border:1px solid var(--gold);color:var(--gold);font:600 11px/1.6 var(--body);letter-spacing:.12em;vertical-align:middle}
 .warn{border-left:4px solid var(--rose);padding:6px 14px;color:var(--ivory);background:rgba(227,144,152,.08);font-size:15px}
 .warn strong{color:var(--rose);font-weight:600}
 ol{padding-left:22px;max-width:64ch}
@@ -68,21 +78,30 @@ footer{text-align:center;color:var(--mist);font-size:14px;padding:30px 20px;bord
 </header>
 <main>
   <h2>Flash your board</h2>
-  <p>Plug the board into this computer with a USB data cable, then pick what it should be. Use Chrome or Edge on a desktop or laptop; Safari and Firefox can't talk to USB serial devices.</p>
+  <p>Plug the board into this computer with a USB data cable. Pick a network, then pick what the board should be. Use Chrome or Edge on a desktop or laptop; Safari and Firefox can't talk to USB serial devices.</p>
 
-  <h3 class="group">ESP32 dev board</h3>
+  <h3 class="group">1. Network</h3>
+  <div class="net" role="radiogroup" aria-label="Network">
+    <input type="radio" name="net" id="netStd" value="std" checked><label for="netStd"><b>Standard</b><span>Normal ESP-NOW. Works with every CA53Y device, including the display.</span></label>
+    <input type="radio" name="net" id="netLr" value="lr"><label for="netLr"><b>Long Range</b><span>Espressif's Long Range mode. Each hop reaches farther.</span></label>
+  </div>
+  <p class="warn"><strong>Standard and Long Range devices can't hear each other.</strong> Everyone in your group, messengers and relays alike, has to pick the same network.</p>
+
+  <h3 class="group">2. Board <span class="tag" id="netTag">STANDARD</span></h3>
+
+  <h3 class="group" style="margin-top:14px">ESP32 dev board</h3>
   <div class="boards">
     <div class="board">
       <h4>Messenger</h4>
       <p>Makes its own Wi-Fi network. Join it from your phone to send and receive messages. Also repeats messages for everyone else.</p>
-      <esp-web-install-button manifest="manifest_messenger.json"><button slot="activate">Install Messenger</button>
+      <esp-web-install-button manifest="manifest_messenger.json"><button slot="activate" data-stdtext="Install Messenger" data-lrtext="Install Long Range Messenger">Install Messenger</button>
         <span slot="unsupported">This browser can't flash boards. Open this page in Chrome or Edge on a computer.</span>
         <span slot="not-allowed">Flashing needs a secure page (https).</span></esp-web-install-button>
     </div>
     <div class="board">
       <h4>Relay</h4>
       <p>No Wi-Fi network and no phone needed. Plug it into a USB charger between two people and it passes messages along. The LED flashes each time.</p>
-      <esp-web-install-button manifest="manifest_relay.json"><button slot="activate">Install Relay</button>
+      <esp-web-install-button manifest="manifest_relay.json"><button slot="activate" data-stdtext="Install Relay" data-lrtext="Install Long Range Relay">Install Relay</button>
         <span slot="unsupported">This browser can't flash boards. Open this page in Chrome or Edge on a computer.</span>
         <span slot="not-allowed">Flashing needs a secure page (https).</span></esp-web-install-button>
     </div>
@@ -93,7 +112,7 @@ footer{text-align:center;color:var(--mist);font-size:14px;padding:30px 20px;bord
     <div class="board">
       <h4>Long-range relay</h4>
       <p>For ESP32-S3-MINI-1U boards with an external antenna. Repeats at full power for the longest reach.</p>
-      <esp-web-install-button manifest="manifest_relay_s3.json"><button slot="activate">Install S3 Relay</button>
+      <esp-web-install-button manifest="manifest_relay_s3.json"><button slot="activate" data-stdtext="Install S3 Relay" data-lrtext="Install Long Range S3 Relay">Install S3 Relay</button>
         <span slot="unsupported">This browser can't flash boards. Open this page in Chrome or Edge on a computer.</span>
         <span slot="not-allowed">Flashing needs a secure page (https).</span></esp-web-install-button>
     </div>
@@ -109,12 +128,27 @@ footer{text-align:center;color:var(--mist);font-size:14px;padding:30px 20px;bord
     <li>Open Nearby to add someone, or add a contact by the 7 characters after CA53Ycomms-.</li>
     <li>Set the same Shared PIN on both sides to encrypt a conversation.</li>
   </ol>
-  <p class="warn">Choosing "Erase device" during install wipes your name, password and contacts. Leave it unchecked when you're only updating.</p>
+  <p class="warn">Choosing "Erase device" during install wipes your name, password and contacts. Long Range installs keep them when it's left unchecked, so you can switch a messenger to Long Range without setting it up again. The portal shows which network a messenger is on, under its name.</p>
 
   <h2>Range</h2>
   <p>Messengers and relays both repeat messages, up to eight hops. Relays can't read encrypted messages. Height matters more than anything: a relay on a windowsill or a hilltop does far more than one on a desk.</p>
-  <p>Have a 2.8 inch ESP32 touch display? Flash it with <a href="https://github.com/colinjcasey/CA53Y-Comms-Display">CA53Y Comms Display</a>. It talks to these boards.</p>
+  <p>Long Range uses a slower radio signal that the receiver can pick out at much weaker levels, so each hop goes noticeably farther on the same board. Messages still go through fine; they just take a few milliseconds longer on air. The phone side of a messenger stays normal Wi-Fi, so your phone connects the same way.</p>
+  <p>Have a 2.8 inch ESP32 touch display? Flash it with <a href="https://github.com/colinjcasey/CA53Y-Comms-Display">CA53Y Comms Display</a>. It talks to Standard boards; a Long Range version is on the way.</p>
 </main>
+<script>
+const M={messenger:"manifest_messenger",relay:"manifest_relay",relay_s3:"manifest_relay_s3"};
+function setNet(lr){
+  document.querySelectorAll("esp-web-install-button").forEach(b=>{
+    const base=b.dataset.base||(b.dataset.base=b.getAttribute("manifest").replace(".json",""));
+    b.setAttribute("manifest",base+(lr?"_lr":"")+".json");
+  });
+  document.getElementById("netTag").textContent=lr?"LONG RANGE":"STANDARD";
+  document.querySelectorAll("[data-lrtext]").forEach(e=>{e.textContent=lr?e.dataset.lrtext:e.dataset.stdtext});
+  if(location.hash!==(lr?"#long-range":"")) history.replaceState(null,"",lr?"#long-range":location.pathname);
+}
+document.querySelectorAll("input[name=net]").forEach(r=>r.addEventListener("change",()=>setNet(r.value==="lr")));
+if(location.hash==="#long-range"){document.getElementById("netLr").checked=true;setNet(true)}
+</script>
 <footer>CA53Y IND. Source, protocol and build notes <a href="https://github.com/colinjcasey/CA53Y-Comms">on GitHub</a>.</footer>
 </body>
 </html>

@@ -20,8 +20,13 @@
   - Relay-only boards: set RELAY_ONLY to 1 before flashing (or build with -DRELAY_ONLY=1). No Wi-Fi network or portal,
     it just listens and repeats. The LED flashes each time it relays something.
 
+  - Long Range builds: set LONG_RANGE to 1 (or build with -DLONG_RANGE=1). ESP-NOW then uses
+    Espressif's Long Range radio mode (slower, but each hop reaches noticeably farther).
+    Long Range and Standard devices CAN'T hear each other, so every board in a group must
+    match. The phone Wi-Fi network stays normal Wi-Fi either way.
+
   Board: "ESP32 Dev Module" on Arduino-ESP32 core 3.x. No extra libraries.
-  Every device must use the same ESPNOW_CHANNEL.
+  Every device must use the same ESPNOW_CHANNEL and the same LONG_RANGE setting.
 */
 
 #include <WiFi.h>
@@ -43,6 +48,9 @@
 // ---------- settings ----------
 #ifndef RELAY_ONLY
 #define RELAY_ONLY     0      // 0 = messenger with phone portal, 1 = relay-only board (no portal)
+#endif
+#ifndef LONG_RANGE
+#define LONG_RANGE     0      // 0 = Standard network, 1 = Long Range network (every device must match)
 #endif
 #define ESPNOW_CHANNEL 1      // must match on every device
 #define MAX_HOPS       8      // how many boards a message may pass through
@@ -116,8 +124,8 @@ RelayKey relaySeen[64];
 int relayPos = 0;
 RelayOut relayq[10];
 uint32_t relayedCount = 0, lastRelayAt = 0;
-#if RELAY_ONLY
-#define NOW_IF WIFI_IF_STA
+#if RELAY_ONLY || LONG_RANGE
+#define NOW_IF WIFI_IF_STA     // Long Range: ESP-NOW on the station side, phone network stays normal Wi-Fi
 #else
 #define NOW_IF WIFI_IF_AP
 #endif
@@ -424,6 +432,7 @@ void handleState() {
   o += "{\"boot\":"; o += bootId;
   o += ",\"seq\":"; o += gSeq;
   o += ",\"setup\":"; o += isSetup ? "true" : "false";
+  o += ",\"lr\":"; o += LONG_RANGE ? "true" : "false";
   o += ",\"me\":{\"id\":"; jesc(o, myId);
   o += ",\"nick\":"; jesc(o, myNick);
   o += ",\"disc\":"; o += discoverable ? "true" : "false";
@@ -629,6 +638,14 @@ void setup() {
   WiFi.softAP(myId, isSetup ? apPw : nullptr, ESPNOW_CHANNEL, 0, 1);   // max 1 phone
 #endif
   esp_wifi_set_ps(WIFI_PS_NONE);
+#if LONG_RANGE
+  // ESP-NOW side: Long Range only. Phone side (AP): normal Wi-Fi so phones can still join.
+  if (esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_LR) != ESP_OK) Serial.println("LR protocol setup failed");
+#if !RELAY_ONLY
+  esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
+#endif
+  esp_wifi_set_max_tx_power(80);   // 20 dBm, the ESP32's maximum
+#endif
 
   if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init failed, restarting"); delay(2000); ESP.restart(); }
   esp_now_register_recv_cb(onRecv);
@@ -638,9 +655,16 @@ void setup() {
   peer.ifidx = NOW_IF;
   peer.encrypt = false;
   esp_now_add_peer(&peer);
+#if LONG_RANGE
+  esp_now_rate_config_t rc = {};
+  rc.phymode = WIFI_PHY_MODE_LR;
+  rc.rate    = WIFI_PHY_RATE_LORA_250K;   // slowest, longest reach
+  if (esp_now_set_peer_rate_config(BCAST, &rc) != ESP_OK) Serial.println("LR rate setup failed");
+#endif
 
 #if RELAY_ONLY
-  Serial.printf("\nCA53Y Comms RELAY  %s  channel %d  max hops %d\n", myId, ESPNOW_CHANNEL, MAX_HOPS);
+  Serial.printf("\nCA53Y Comms RELAY  %s  channel %d  max hops %d  %s\n", myId, ESPNOW_CHANNEL, MAX_HOPS,
+                LONG_RANGE ? "LONG RANGE" : "standard");
   return;
 #endif
   dns.setErrorReplyCode(DNSReplyCode::NoError);
@@ -657,8 +681,9 @@ void setup() {
   server.onNotFound(handleNotFound);
   server.begin();
 
-  Serial.printf("\nCA53Y Comms  %s  (%s)  channel %d  contacts %d\n", myId,
-                isSetup ? "password set" : "OPEN - waiting for setup", ESPNOW_CHANNEL, nContacts);
+  Serial.printf("\nCA53Y Comms  %s  (%s)  channel %d  contacts %d  %s\n", myId,
+                isSetup ? "password set" : "OPEN - waiting for setup", ESPNOW_CHANNEL, nContacts,
+                LONG_RANGE ? "LONG RANGE" : "standard");
   Serial.println("Join that Wi-Fi network and open http://192.168.4.1");
 }
 

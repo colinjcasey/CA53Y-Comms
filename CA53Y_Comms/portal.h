@@ -24,6 +24,7 @@ mask:radial-gradient(closest-side,transparent 16%,#000 18%,#000 55%,transparent 
 .plate h1{margin:0;font:400 clamp(30px,9vw,42px)/1.05 var(--disp);color:var(--champ);letter-spacing:.01em}
 .code{display:inline-block;margin-top:10px;padding:3px 14px;border:1px solid var(--gold);border-left-width:4px;border-right-width:4px;color:var(--gold);font:400 19px/1.3 var(--disp);letter-spacing:.2em;background:var(--lac)}
 .nick{margin:10px 0 0;color:var(--mist);font-size:15px}
+.net{margin:4px 0 0;color:var(--gold);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
 .gear{position:absolute;top:12px;right:12px;background:none;border:0;color:var(--mist);padding:8px;font-size:14px;cursor:pointer}
 h2{font:400 22px/1.2 var(--disp);color:var(--champ);margin:26px 20px 8px;display:flex;align-items:baseline;justify-content:space-between}
 h2 .btn{font:15px/1 var(--body)}
@@ -77,6 +78,7 @@ label{display:block;margin:14px 0 6px;font-size:14px;color:var(--champ)}
   <h1>CA53Ycomms</h1>
   <div class="code" id="idcode">&nbsp;</div>
   <p class="nick" id="nick"></p>
+  <p class="net" id="net"></p>
  </header>
 
  <section id="setup" class="setup" hidden>
@@ -179,6 +181,7 @@ function render(){
  if(!S.me)return;
  $('#idcode').textContent=S.me.id.slice(PRE.length);
  $('#nick').textContent=S.me.nick||(S.setup?'No name set':'');
+ $('#net').textContent=S.lr?'Long Range network':'Standard network';
  $('#setup').hidden=S.setup;$('#openSettings').hidden=!S.setup;
  if(!S.setup){$('#list').hidden=true;$('#thread').hidden=true;return}
  if(S.open&&!contact(S.open))S.open=null;
